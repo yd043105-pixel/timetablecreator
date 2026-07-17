@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>시간표 생성기</title>
+  <script src="./coi-serviceworker.min.js"></script>
+  <link rel="stylesheet" href="./src/style.css" />
+</head>
+<body>
+<div class="app">
+
+  <!-- ───────── 좌측 레일 ───────── -->
+  <aside class="rail">
+    <div class="brand">
+      <svg class="glyph" viewBox="0 0 20 28" aria-hidden="true">
+        <g fill="currentColor">
+          <rect x="0"  y="0"  width="3.4" height="3.4"/><rect x="4.1" y="0"  width="3.4" height="3.4"/><rect x="8.2" y="0" width="3.4" height="3.4"/><rect x="12.3" y="0" width="3.4" height="3.4"/><rect x="16.4" y="0" width="3.4" height="3.4"/>
+        </g>
+        <g fill="currentColor" opacity="0.28">
+          <rect x="0" y="4.8" width="3.4" height="3.4"/><rect x="8.2" y="4.8" width="3.4" height="3.4"/><rect x="16.4" y="4.8" width="3.4" height="3.4"/>
+          <rect x="4.1" y="9.6" width="3.4" height="3.4"/><rect x="12.3" y="9.6" width="3.4" height="3.4"/>
+          <rect x="0" y="14.4" width="3.4" height="3.4"/><rect x="8.2" y="14.4" width="3.4" height="3.4"/><rect x="16.4" y="14.4" width="3.4" height="3.4"/>
+          <rect x="4.1" y="19.2" width="3.4" height="3.4"/><rect x="12.3" y="19.2" width="3.4" height="3.4"/>
+          <rect x="0" y="24" width="3.4" height="3.4"/><rect x="8.2" y="24" width="3.4" height="3.4"/>
+        </g>
+        <g fill="var(--brand)">
+          <rect x="4.1" y="4.8" width="3.4" height="3.4"/><rect x="12.3" y="14.4" width="3.4" height="3.4"/><rect x="16.4" y="19.2" width="3.4" height="3.4"/>
+        </g>
+      </svg>
+      <div class="brand-text">
+        <span class="brand-name">시간표 생성기</span>
+        <span class="brand-sub">브라우저 내 연산<br>여양고 교사 김동욱 제작</span>
+      </div>
+      <button id="btnTheme" class="theme-btn" title="라이트 / 다크 전환" aria-label="테마 전환">🌙</button>
+    </div>
+
+    <nav class="nav" id="stepNav">
+      <button class="nav-item step-item active" data-step="1"><span class="nav-i">1</span>기본 입력</button>
+      <button class="nav-item step-item" data-step="2" disabled><span class="nav-i">2</span>규칙 · 설정</button>
+      <button class="nav-item step-item" data-step="3" disabled><span class="nav-i">3</span>결과 · 장판지</button>
+    </nav>
+
+    <div class="rail-run" id="railRun">
+      <div class="penalty" id="penaltyCard" data-state="idle" hidden>
+        <span class="penalty-label" id="penaltyLabel">대기 중</span>
+        <span class="penalty-num" id="penaltyLive">—</span>
+        <span class="penalty-msg" id="progressMsg"></span>
+      </div>
+      <div id="progressBox" class="run-track" hidden><span class="dot"></span></div>
+      <div class="run-btns">
+        <button id="btnNext" class="btn btn-brand block" disabled>다음 — 규칙 · 설정</button>
+        <button id="btnRun" class="btn btn-brand block" hidden>시간표 생성</button>
+        <button id="btnStop" class="btn btn-stop block" hidden>생성 중단</button>
+        <button id="btnMore" class="btn btn-soft block" hidden>이어서 더 돌리기</button>
+        <button id="btnSession" class="btn btn-ghost block" hidden>이어돌리기 저장</button>
+        <button id="btnPrev" class="btn btn-ghost block" hidden>← 이전 단계</button>
+      </div>
+    </div>
+
+    <div class="rail-foot" id="railFoot">브라우저 안에서 계산됩니다 — 데이터는 서버로 전송되지 않습니다.</div>
+  </aside>
+
+  <!-- ───────── 본문 ───────── -->
+  <main class="main">
+
+    <!-- 1단계: 기본 입력 -->
+    <div class="step" id="step1">
+      <header class="page-head">
+        <h1>1. 기본 입력</h1>
+        <p>시수표를 열고 비수업·불가시간·유사과목을 지정한 뒤, 왼쪽 <b>다음</b>을 누르세요.</p>
+      </header>
+      <div class="grid2">
+
+        <!-- 시수표 -->
+        <section class="panel" id="secFile">
+          <div class="panel-head">
+            <h2>시수표</h2>
+            <span class="panel-note">엑셀 시수표 또는 이어돌리기 파일을 엽니다</span>
+          </div>
+          <div class="field-row">
+            <label class="field">학년도<input type="number" id="year" value="2026" min="2000" max="2100" /></label>
+            <label class="field">학기
+              <select id="semester"><option value="1">1학기</option><option value="2">2학기</option></select>
+            </label>
+            <div class="seg" id="levelSeg">
+              <button class="seg-btn active" data-level="3">중등</button>
+              <button class="seg-btn" data-level="6">초등</button>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button id="btnOpenFile" class="btn btn-brand">시수표 열기</button>
+            <button id="btnSessionOpen" class="btn btn-ghost">이어돌리기 열기</button>
+            <button id="btnLoadSettings" class="btn btn-ghost">설정 불러오기</button>
+            <button id="btnSaveSettings" class="btn btn-ghost">설정 저장</button>
+            <input type="file" id="fileInput" accept=".xlsx" hidden />
+            <input type="file" id="settingsInput" accept=".json" hidden />
+            <input type="file" id="sessionInput" accept=".json" hidden />
+          </div>
+          <div id="fileInfo" class="filecard empty">아직 시수표를 열지 않았습니다.</div>
+
+          <details class="subpanel" id="tplPanel">
+            <summary class="subpanel-head">빈 양식 만들기 — 학급 수·특별실에 맞춘 시수표 양식</summary>
+            <div class="field-row wrap" id="tplGrades" style="margin-top:12px"></div>
+            <div class="field-row" style="margin-top:10px">
+              <input type="text" id="tplSpecialName" class="grow" placeholder="특별실 이름 (예: 음악실)" />
+              <button id="btnAddSpecial" class="btn btn-ghost sm">추가</button>
+              <button id="btnTemplate" class="btn btn-soft sm">양식 다운로드</button>
+            </div>
+            <div id="tplSpecialList" class="chips" style="margin-top:10px"></div>
+          </details>
+        </section>
+
+        <!-- 비수업 -->
+        <section class="panel" id="secNonclass">
+          <div class="panel-head">
+            <h2>비수업 시간</h2>
+            <span class="panel-note">자율·창체 등 학년 전체가 수업하지 않는 시간</span>
+          </div>
+          <div class="field-row">
+            <select id="ncGrade"></select>
+            <select id="ncDay"></select>
+            <select id="ncPeriod"></select>
+            <button id="btnAddNc" class="btn btn-brand sm">추가</button>
+          </div>
+          <div class="nc-grid" id="ncGrid"></div>
+        </section>
+
+        <!-- 교사 불가시간 -->
+        <section class="panel" id="secUnavail">
+          <div class="panel-head">
+            <h2>교사 불가시간</h2>
+            <span class="panel-note">교사를 고르면 격자에 기존 설정이 표시됩니다</span>
+          </div>
+          <div class="field-row">
+            <select id="uaTeacher"></select>
+            <select id="uaGrade">
+              <option value="0">전체학년</option><option value="1">1학년만</option>
+              <option value="2">2학년만</option><option value="3">3학년만</option>
+            </select>
+            <button id="btnUaRegister" class="btn btn-brand sm">등록</button>
+            <button id="btnUaClear" class="btn btn-ghost sm">비우기</button>
+          </div>
+          <table class="ua-grid" id="uaGrid"></table>
+          <div id="uaList" class="chips wide" style="margin-top:14px"></div>
+        </section>
+
+        <!-- 유사과목 -->
+        <section class="panel" id="secSimilar">
+          <div class="panel-head">
+            <h2>유사과목 그룹</h2>
+            <span class="panel-note">같은 학급에서 같은 날 겹치지 않게</span>
+          </div>
+          <div id="subjPalette" class="check-palette"></div>
+          <div class="field-row">
+            <input type="text" id="grpName" placeholder="그룹 이름 (예: 과학탐구)" class="grow" />
+            <button id="btnAddGroup" class="btn btn-brand sm">그룹 저장</button>
+          </div>
+          <div id="grpList" class="chips wide" style="margin-top:12px"></div>
+        </section>
+      </div>
+    </div>
+
+    <!-- 2단계: 규칙 · 설정 -->
+    <div class="step" id="step2" hidden>
+      <header class="page-head">
+        <h1>2. 규칙 · 설정</h1>
+        <p>사용할 규칙을 켜고 끈 뒤, 왼쪽 <b>시간표 생성</b>을 누르세요. 진행 상황과 페널티가 왼쪽에 표시됩니다.</p>
+      </header>
+
+      <section class="panel" id="secRules">
+        <div class="panel-head">
+          <h2>규칙 선택</h2>
+          <span class="panel-note">이름 옆 <b>[설명]</b>을 누르면 자세한 설명이 나옵니다</span>
+        </div>
+        <div class="rules-cols">
+          <div class="rules-block">
+            <h3>하드 규칙 <span class="dim">— 반드시 지킴</span></h3>
+            <div id="hardRules" class="rule-list"></div>
+          </div>
+          <div class="rules-block">
+            <h3>소프트 규칙 <span class="dim">— 가급적 지킴 (어기면 벌점)</span></h3>
+            <div id="softRules" class="rule-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="secParams">
+        <div class="panel-head"><h2>설정</h2></div>
+        <div class="field-row wrap">
+          <label class="field">교사 최대 연속<input type="number" id="pMaxConsec" value="2" min="1" max="7" /></label>
+          <label class="field">하루 시수 여유<input type="number" id="pDailyN" value="1" min="0" max="3" /></label>
+          <label class="field">탐색 시간(초)<input type="number" id="pTimeLimit" value="180" min="10" max="3600" /></label>
+          <label class="field">점심 직전 교시<input type="number" id="pLunchPeriod" value="4" min="1" max="6" /></label>
+        </div>
+        <p class="hint">점심 직전 교시는 규칙 '소프트5(점심 전후 연속 방지)'를 켰을 때만 사용됩니다.</p>
+      </section>
+
+      <section class="panel ghost-panel" id="secRun" hidden>
+        <details id="logWrap">
+          <summary>생성 로그 보기</summary>
+          <pre id="runLog" class="log"></pre>
+        </details>
+      </section>
+    </div>
+
+    <!-- 3단계: 결과 · 장판지 -->
+    <div class="step step-wide" id="step3" hidden>
+      <section class="panel" id="secResult">
+        <div class="panel-head">
+          <h2>결과</h2>
+          <div class="seg" id="viewSeg">
+            <select id="viewMode" hidden>
+              <option value="class">학급별</option><option value="teacher">교사별</option><option value="board">장판지</option>
+            </select>
+            <button class="seg-btn" data-view="class">학급별</button>
+            <button class="seg-btn" data-view="teacher">교사별</button>
+            <button class="seg-btn active" data-view="board">장판지</button>
+          </div>
+          <select id="viewTarget" hidden></select>
+          <button id="btnUndo" class="btn btn-ghost sm" disabled>편집 취소</button>
+          <button id="btnDownload" class="btn btn-brand sm">엑셀 다운로드</button>
+        </div>
+        <div id="resultSummary" class="result-summary"></div>
+        <p class="edit-hint">수업을 <b>드래그</b>해 옮기거나 맞바꿀 수 있습니다. <b>장판지</b>에서는 출장 등으로 못 하는 수업을 <b>다른 선생님 수업과 맞교환</b>할 수 있고, 집으면 <span class="dot-green"></span> 바로 교체 가능한 칸이 표시됩니다.</p>
+        <div class="board-wrap">
+          <table class="tt-grid" id="ttPreview"></table>
+        </div>
+        <details style="margin-top:16px">
+          <summary>페널티 상세 진단</summary>
+          <pre id="diagText" class="log"></pre>
+        </details>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- 규칙 설명 팝업 -->
+<div id="ruleModal" class="modal" hidden>
+  <div class="modal-backdrop" id="ruleModalBackdrop"></div>
+  <div class="modal-box" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <span id="ruleModalTitle"></span>
+      <button id="ruleModalClose" class="modal-x" aria-label="닫기">✕</button>
+    </div>
+    <div id="ruleModalBody" class="modal-body"></div>
+  </div>
+</div>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
