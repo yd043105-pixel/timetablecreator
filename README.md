@@ -58,6 +58,17 @@ npm run preview    # 빌드 결과 미리보기
 > `public/coi-serviceworker.min.js`가 서비스워커로 헤더를 대신 주입합니다
 > (첫 접속 시 페이지가 한 번 자동 새로고침되는 것이 정상입니다).
 
+## Netlify / Cloudflare Pages 배포 (보안 헤더 완전 적용)
+
+GitHub Pages는 응답 헤더를 못 붙여 CSP·클릭재킹 방어 등이 meta 태그·스크립트 수준에 그칩니다.
+`public/_headers`에 보안 헤더 8종이 정의되어 있어, 아래 호스팅에 연결하면 그대로 적용됩니다.
+
+- **Netlify** — 저장소 연결만 하면 `netlify.toml`을 자동 인식합니다.
+- **Cloudflare Pages** — 빌드 명령 `npm run build`, 출력 디렉터리 `dist`로 연결합니다.
+  (빌드에 포함된 `scripts/prune_wasm.mjs`가 대형 WASM을 정리해 파일당 25MiB 제한을 통과합니다)
+
+둘 다 진짜 COOP/COEP 헤더가 붙으므로 coi-serviceworker 없이도 교차 출처 격리가 됩니다(있어도 무해).
+
 ## 구조
 
 | 파일 | 역할 |

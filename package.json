@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/prune_wasm.mjs",
     "preview": "vite preview",
     "test": "node test/parity_test.mjs && node test/solve_test.mjs"
   },
