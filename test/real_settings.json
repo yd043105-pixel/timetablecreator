@@ -1,0 +1,661 @@
+{
+ "year": 2026,
+ "semester": 2,
+ "gradeCount": 3,
+ "nonclass": [
+  {
+   "grade": 1,
+   "day": "월",
+   "period": 1,
+   "label": "자율"
+  },
+  {
+   "grade": 2,
+   "day": "월",
+   "period": 1,
+   "label": "자율"
+  },
+  {
+   "grade": 3,
+   "day": "월",
+   "period": 1,
+   "label": "자율"
+  },
+  {
+   "grade": 1,
+   "day": "화",
+   "period": 7,
+   "label": "자율"
+  },
+  {
+   "grade": 2,
+   "day": "화",
+   "period": 7,
+   "label": "자율"
+  },
+  {
+   "grade": 3,
+   "day": "화",
+   "period": 7,
+   "label": "자율"
+  },
+  {
+   "grade": 1,
+   "day": "수",
+   "period": 6,
+   "label": "자율"
+  },
+  {
+   "grade": 2,
+   "day": "수",
+   "period": 6,
+   "label": "자율"
+  },
+  {
+   "grade": 3,
+   "day": "수",
+   "period": 6,
+   "label": "자율"
+  },
+  {
+   "grade": 1,
+   "day": "수",
+   "period": 7,
+   "label": "자율"
+  },
+  {
+   "grade": 2,
+   "day": "수",
+   "period": 7,
+   "label": "자율"
+  },
+  {
+   "grade": 3,
+   "day": "수",
+   "period": 7,
+   "label": "자율"
+  },
+  {
+   "grade": 1,
+   "day": "목",
+   "period": 7,
+   "label": "자율"
+  },
+  {
+   "grade": 3,
+   "day": "목",
+   "period": 7,
+   "label": "자율"
+  },
+  {
+   "grade": 1,
+   "day": "월",
+   "period": 7,
+   "label": "자율"
+  },
+  {
+   "grade": 1,
+   "day": "금",
+   "period": 7,
+   "label": "자율"
+  }
+ ],
+ "unavail": [
+  {
+   "teacher": "교사02",
+   "day": "금",
+   "period": 1,
+   "grade": 0,
+   "reason": ""
+  },
+  {
+   "teacher": "교사02",
+   "day": "금",
+   "period": 2,
+   "grade": 0,
+   "reason": ""
+  },
+  {
+   "teacher": "교사02",
+   "day": "금",
+   "period": 3,
+   "grade": 0,
+   "reason": ""
+  },
+  {
+   "teacher": "교사02",
+   "day": "금",
+   "period": 4,
+   "grade": 0,
+   "reason": ""
+  },
+  {
+   "teacher": "교사02",
+   "day": "금",
+   "period": 5,
+   "grade": 0,
+   "reason": ""
+  },
+  {
+   "teacher": "교사02",
+   "day": "금",
+   "period": 6,
+   "grade": 0,
+   "reason": ""
+  },
+  {
+   "teacher": "교사02",
+   "day": "금",
+   "period": 7,
+   "grade": 0,
+   "reason": ""
+  },
+  {
+   "teacher": "교사16",
+   "day": "화",
+   "period": 7,
+   "grade": 0,
+   "reason": ""
+  },
+  {
+   "teacher": "교사16",
+   "day": "목",
+   "period": 7,
+   "grade": 0,
+   "reason": ""
+  },
+  {
+   "teacher": "교사16",
+   "day": "금",
+   "period": 7,
+   "grade": 0,
+   "reason": ""
+  },
+  {
+   "teacher": "교사33",
+   "day": "화",
+   "period": 7,
+   "grade": 0,
+   "reason": ""
+  },
+  {
+   "teacher": "교사33",
+   "day": "목",
+   "period": 7,
+   "grade": 0,
+   "reason": ""
+  },
+  {
+   "teacher": "교사33",
+   "day": "금",
+   "period": 7,
+   "grade": 0,
+   "reason": ""
+  },
+  {
+   "teacher": "교사34",
+   "day": "금",
+   "period": 1,
+   "grade": 0,
+   "reason": ""
+  },
+  {
+   "teacher": "교사34",
+   "day": "금",
+   "period": 2,
+   "grade": 0,
+   "reason": ""
+  },
+  {
+   "teacher": "교사34",
+   "day": "금",
+   "period": 3,
+   "grade": 0,
+   "reason": ""
+  },
+  {
+   "teacher": "교사34",
+   "day": "금",
+   "period": 4,
+   "grade": 0,
+   "reason": ""
+  },
+  {
+   "teacher": "교사34",
+   "day": "금",
+   "period": 5,
+   "grade": 0,
+   "reason": ""
+  },
+  {
+   "teacher": "교사34",
+   "day": "금",
+   "period": 6,
+   "grade": 0,
+   "reason": ""
+  },
+  {
+   "teacher": "교사34",
+   "day": "금",
+   "period": 7,
+   "grade": 0,
+   "reason": ""
+  },
+  {
+   "teacher": "교사01",
+   "day": "화",
+   "period": 1,
+   "grade": 1,
+   "reason": ""
+  },
+  {
+   "teacher": "교사01",
+   "day": "화",
+   "period": 2,
+   "grade": 1,
+   "reason": ""
+  },
+  {
+   "teacher": "교사01",
+   "day": "화",
+   "period": 3,
+   "grade": 1,
+   "reason": ""
+  },
+  {
+   "teacher": "교사01",
+   "day": "화",
+   "period": 4,
+   "grade": 1,
+   "reason": ""
+  },
+  {
+   "teacher": "교사01",
+   "day": "화",
+   "period": 5,
+   "grade": 1,
+   "reason": ""
+  },
+  {
+   "teacher": "교사01",
+   "day": "화",
+   "period": 6,
+   "grade": 1,
+   "reason": ""
+  },
+  {
+   "teacher": "교사01",
+   "day": "화",
+   "period": 7,
+   "grade": 1,
+   "reason": ""
+  },
+  {
+   "teacher": "교사01",
+   "day": "목",
+   "period": 1,
+   "grade": 1,
+   "reason": ""
+  },
+  {
+   "teacher": "교사01",
+   "day": "목",
+   "period": 2,
+   "grade": 1,
+   "reason": ""
+  },
+  {
+   "teacher": "교사01",
+   "day": "목",
+   "period": 3,
+   "grade": 1,
+   "reason": ""
+  },
+  {
+   "teacher": "교사01",
+   "day": "목",
+   "period": 4,
+   "grade": 1,
+   "reason": ""
+  },
+  {
+   "teacher": "교사01",
+   "day": "목",
+   "period": 5,
+   "grade": 1,
+   "reason": ""
+  },
+  {
+   "teacher": "교사01",
+   "day": "목",
+   "period": 6,
+   "grade": 1,
+   "reason": ""
+  },
+  {
+   "teacher": "교사01",
+   "day": "목",
+   "period": 7,
+   "grade": 1,
+   "reason": ""
+  },
+  {
+   "teacher": "교사04",
+   "day": "화",
+   "period": 1,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사04",
+   "day": "화",
+   "period": 2,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사04",
+   "day": "화",
+   "period": 3,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사04",
+   "day": "화",
+   "period": 4,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사04",
+   "day": "화",
+   "period": 5,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사04",
+   "day": "화",
+   "period": 6,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사04",
+   "day": "화",
+   "period": 7,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사04",
+   "day": "목",
+   "period": 1,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사04",
+   "day": "목",
+   "period": 2,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사04",
+   "day": "목",
+   "period": 3,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사04",
+   "day": "목",
+   "period": 4,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사04",
+   "day": "목",
+   "period": 5,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사04",
+   "day": "목",
+   "period": 6,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사04",
+   "day": "목",
+   "period": 7,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사13",
+   "day": "화",
+   "period": 1,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사13",
+   "day": "화",
+   "period": 2,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사13",
+   "day": "화",
+   "period": 3,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사13",
+   "day": "화",
+   "period": 4,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사13",
+   "day": "화",
+   "period": 5,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사13",
+   "day": "화",
+   "period": 6,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사13",
+   "day": "화",
+   "period": 7,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사13",
+   "day": "목",
+   "period": 1,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사13",
+   "day": "목",
+   "period": 2,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사13",
+   "day": "목",
+   "period": 3,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사13",
+   "day": "목",
+   "period": 4,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사13",
+   "day": "목",
+   "period": 5,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사13",
+   "day": "목",
+   "period": 6,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사13",
+   "day": "목",
+   "period": 7,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사30",
+   "day": "화",
+   "period": 1,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사30",
+   "day": "화",
+   "period": 2,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사30",
+   "day": "화",
+   "period": 3,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사30",
+   "day": "화",
+   "period": 4,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사30",
+   "day": "화",
+   "period": 5,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사30",
+   "day": "화",
+   "period": 6,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사30",
+   "day": "화",
+   "period": 7,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사30",
+   "day": "목",
+   "period": 1,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사30",
+   "day": "목",
+   "period": 2,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사30",
+   "day": "목",
+   "period": 3,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사30",
+   "day": "목",
+   "period": 4,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사30",
+   "day": "목",
+   "period": 5,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사30",
+   "day": "목",
+   "period": 6,
+   "grade": 2,
+   "reason": ""
+  },
+  {
+   "teacher": "교사30",
+   "day": "목",
+   "period": 7,
+   "grade": 2,
+   "reason": ""
+  }
+ ],
+ "similar": [],
+ "tplSpecials": [
+  "도서관"
+ ],
+ "ruleFlags": {
+  "classConflict": true,
+  "teacherConflict": true,
+  "nonclass": true,
+  "unavail": true,
+  "bundleDay": true,
+  "sameSubjectDay": true,
+  "twoHourAdjDay": true,
+  "teacherConsec": true,
+  "teacherDaily": true,
+  "pairing": true,
+  "similarDay": true,
+  "lunch": false
+ },
+ "params": {
+  "max_consecutive": 2,
+  "daily_n": 1,
+  "time_limit": 20,
+  "lunch_period": 4
+ }
+}
