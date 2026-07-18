@@ -61,6 +61,7 @@
 :root[data-theme="dark"] .tt-grid th:first-child,
 :root[data-theme="dark"] .tt-grid.board-mode .row-head,
 :root[data-theme="dark"] .tt-grid.board-mode thead .daygrp,
+:root[data-theme="dark"] .tt-grid.board-mode tfoot .total-row td,
 :root[data-theme="dark"] .ua-grid tr:first-child th,
 :root[data-theme="dark"] .ua-grid th:first-child,
 :root[data-theme="dark"] .seg-btn.active { background: #1f2c37; }
@@ -355,6 +356,9 @@ summary.subpanel-head { font-size: 13px; font-weight: 700; cursor: pointer; }
 .tt-grid.board-mode td .bmark { min-width: 12px; height: 12px; font-size: 9px; margin-left: 2px; padding: 0 2px; vertical-align: 0; }
 .tt-grid.board-mode .daysep { border-left: 2px solid var(--line); }
 .tt-grid.board-mode thead .daygrp { background: #eef2f6; font-weight: 700; color: var(--ink-2); }
+.tt-grid.board-mode tfoot .total-row td { background: #eef2f6; font-weight: 700; color: var(--ink-2);
+  text-align: center; font-family: var(--mono); border-top: 2px solid var(--line); }
+.tt-grid.board-mode tfoot .total-row .row-head { border-top: 2px solid var(--line); }
 .step-wide .board-wrap { max-height: calc(100vh - 210px); overflow: auto; }
 .tt-grid.board-mode thead th { position: sticky; top: 0; z-index: 3; }
 .tt-grid.board-mode thead .row-head { z-index: 4; }

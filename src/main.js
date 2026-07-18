@@ -845,7 +845,22 @@ function renderMasterBoard(st, cmap) {
     }
     body += '</tr>';
   }
-  $('ttPreview').innerHTML = `<thead>${head1}${head2}</thead><tbody>${body}</tbody>`;
+
+  // 최하단: 교시별 전체 수업 수 합계
+  let foot = '<tr class="total-row"><th class="row-head">수업 수</th>';
+  for (const d of DAYS) {
+    for (const p of PERIODS) {
+      const kk = `${d}|${p}`;
+      let n = 0;
+      for (const t of teachers) {
+        const list = occByTeacher.get(t).get(kk);
+        if (list) n += list.length;
+      }
+      foot += `<td class="${p === 1 ? 'daysep' : ''}">${n || ''}</td>`;
+    }
+  }
+  foot += '</tr>';
+  $('ttPreview').innerHTML = `<thead>${head1}${head2}</thead><tbody>${body}</tbody><tfoot>${foot}</tfoot>`;
 }
 
 // ───────── 드래그앤드롭 편집 ─────────
