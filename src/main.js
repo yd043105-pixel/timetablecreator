@@ -957,7 +957,7 @@ function renderMasterBoard(st, cmap) {
     hintEl.className = 'reloc-hint';
     const { subj, cids } = unitLabel(src.uid);
     hintEl.textContent = `"${subj} (${cids})"을(를) 옮길 목표 칸을 같은 줄에서 클릭하세요 — ESC 취소`;
-    board.closest('.board-wrap').before(hintEl);
+    document.body.appendChild(hintEl);   // 오버레이 — 장판지 레이아웃을 밀지 않음
   });
 
   board.addEventListener('click', (e) => {
@@ -1016,6 +1016,79 @@ function renderMasterBoard(st, cmap) {
   $('relocCancel').onclick = closeModal;
   $('relocModalClose').onclick = closeModal;
   $('relocModalBackdrop').onclick = closeModal;
+})();
+
+// ───────── 규칙 추가 요청 게시판 (GitHub Issues 연동) ─────────
+(() => {
+  const REPO = 'yd043105-pixel/timetablecreator';
+  const modal = $('issueModal');
+  const list = $('issueList');
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g,
+    c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fmtDate = (iso) => new Date(iso).toLocaleDateString('ko-KR', { year: '2-digit', month: 'numeric', day: 'numeric' });
+  $('issueNew').href = `https://github.com/${REPO}/issues/new?title=${encodeURIComponent('[규칙 요청] ')}` +
+    `&body=${encodeURIComponent('**원하는 규칙**\n\n\n**이유 (어떤 상황에서 필요한지)**\n\n')}`;
+
+  let loaded = false;
+  async function loadIssues() {
+    list.innerHTML = '<div class="issue-empty">불러오는 중…</div>';
+    try {
+      const r = await fetch(`https://api.github.com/repos/${REPO}/issues?state=all&per_page=30&sort=created&direction=desc`);
+      if (!r.ok) throw new Error(`GitHub API ${r.status}`);
+      const issues = (await r.json()).filter(i => !i.pull_request);
+      if (!issues.length) {
+        list.innerHTML = '<div class="issue-empty">아직 요청이 없습니다 — 첫 요청을 남겨보세요.</div>';
+        return;
+      }
+      list.innerHTML = issues.map(i =>
+        `<div class="issue-item">
+          <button class="issue-head" data-num="${i.number}">
+            <span class="issue-state ${i.state}">${i.state === 'open' ? '진행중' : '완료'}</span>
+            <span class="issue-title">${esc(i.title)}</span>
+            <span class="issue-meta">${esc(i.user.login)} · ${fmtDate(i.created_at)} · 💬 ${i.comments}</span>
+          </button>
+          <div class="issue-detail" hidden></div>
+        </div>`).join('');
+    } catch (err) {
+      list.innerHTML = `<div class="issue-empty">목록을 불러오지 못했습니다 (${esc(err.message)}) — 잠시 후 새로고침해 주세요.</div>`;
+    }
+  }
+
+  // 제목 클릭 → 본문·댓글 펼침/접힘
+  list.addEventListener('click', async (e) => {
+    const head = e.target.closest('.issue-head');
+    if (!head) return;
+    const det = head.closest('.issue-item').querySelector('.issue-detail');
+    if (!det.hidden) { det.hidden = true; return; }
+    det.hidden = false;
+    det.innerHTML = '<div class="issue-empty">불러오는 중…</div>';
+    const num = head.dataset.num;
+    try {
+      const [ri, rc] = await Promise.all([
+        fetch(`https://api.github.com/repos/${REPO}/issues/${num}`),
+        fetch(`https://api.github.com/repos/${REPO}/issues/${num}/comments?per_page=50`),
+      ]);
+      if (!ri.ok || !rc.ok) throw new Error('GitHub API 오류');
+      const issue = await ri.json(), comments = await rc.json();
+      const cmts = comments.map(c =>
+        `<div class="issue-cmt"><b>${esc(c.user.login)}</b> <span class="issue-meta">${fmtDate(c.created_at)}</span>` +
+        `<div>${esc(c.body)}</div></div>`).join('');
+      det.innerHTML = `<div class="issue-post">${esc(issue.body || '(내용 없음)')}</div>` + cmts +
+        `<a class="btn btn-ghost sm issue-cmt-link" href="https://github.com/${REPO}/issues/${num}" target="_blank" rel="noopener">댓글 달기 (GitHub) →</a>`;
+    } catch (err) {
+      det.innerHTML = `<div class="issue-empty">불러오기 실패 (${esc(err.message)})</div>`;
+    }
+  });
+
+  $('btnIssueBoard').onclick = () => {
+    modal.hidden = false;
+    if (!loaded) { loaded = true; loadIssues(); }
+  };
+  $('issueRefresh').onclick = loadIssues;
+  const close = () => { modal.hidden = true; };
+  $('issueModalClose').onclick = close;
+  $('issueModalBackdrop').onclick = close;
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.hidden) close(); });
 })();
 
 // ───────── 엑셀 다운로드 ─────────

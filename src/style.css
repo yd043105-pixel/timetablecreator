@@ -347,12 +347,13 @@ summary.subpanel-head { font-size: 13px; font-weight: 700; cursor: pointer; }
   color: #3a2c00; background: rgba(0,0,0,.10); vertical-align: 1px; }
 
 /* 장판지 (교사 마스터 격자) — 가로는 넓게, 세로는 1920×1080에 한 화면 */
-.tt-grid.board-mode { min-width: 1460px; width: 100%; }
+.tt-grid.board-mode { min-width: 1460px; width: 100%; table-layout: fixed; }
 .tt-grid.board-mode th, .tt-grid.board-mode td { padding: 0 2px; font-size: 10.5px; height: 20px; line-height: 1.15; }
 .tt-grid.board-mode .row-head { position: sticky; left: 0; z-index: 2; background: #f7f9fb; font-weight: 700;
-  text-align: right; padding-right: 8px; min-width: 70px; color: var(--ink-2); box-shadow: 1px 0 0 var(--line); font-size: 11px; }
-.tt-grid.board-mode td { min-width: 39px; }
-.tt-grid.board-mode td .subj { font-size: 10.5px; font-weight: 600; }
+  text-align: right; padding-right: 8px; width: 76px; color: var(--ink-2); box-shadow: 1px 0 0 var(--line); font-size: 11px;
+  overflow: hidden; white-space: nowrap; }
+.tt-grid.board-mode td { overflow: hidden; }
+.tt-grid.board-mode td .subj { font-size: 10.5px; font-weight: 600; white-space: nowrap; overflow: hidden; }
 .tt-grid.board-mode td .bmark { min-width: 12px; height: 12px; font-size: 9px; margin-left: 2px; padding: 0 2px; vertical-align: 0; }
 .tt-grid.board-mode .daysep { border-left: 2px solid var(--line); }
 .tt-grid.board-mode thead .daygrp { background: #eef2f6; font-weight: 700; color: var(--ink-2); }
@@ -430,11 +431,37 @@ summary.subpanel-head { font-size: 13px; font-weight: 700; cursor: pointer; }
 .modal-body { padding: 18px 20px 22px; font-size: 13.5px; line-height: 1.75; color: var(--ink-2); white-space: pre-wrap; }
 .modal-body .m-score { display: inline-block; margin-top: 12px; font-size: 12px; color: var(--brand); font-weight: 600; }
 .modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px 16px; border-top: 1px solid var(--line); }
+.modal-box.wide { max-width: 760px; }
+
+/* 규칙 추가 요청 게시판 */
+.issue-body { max-height: 72vh; overflow: auto; white-space: normal; }
+.issue-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.issue-toolbar a.btn { text-decoration: none; }
+.issue-note { font-size: 11.5px; color: var(--muted); }
+.issue-list { display: flex; flex-direction: column; gap: 6px; }
+.issue-item { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.issue-head { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px;
+  background: none; border: none; cursor: pointer; text-align: left; font: inherit; color: var(--ink); }
+.issue-head:hover { background: var(--brand-ghost); }
+.issue-state { flex: none; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+.issue-state.open { background: var(--brand-ghost); color: var(--brand); }
+.issue-state.closed { background: var(--line-2); color: var(--muted); }
+.issue-title { flex: 1; font-weight: 600; font-size: 13.5px; min-width: 0; }
+.issue-meta { flex: none; font-size: 11.5px; color: var(--muted); }
+.issue-detail { padding: 4px 14px 12px; border-top: 1px dashed var(--line); }
+.issue-post { white-space: pre-wrap; font-size: 13px; color: var(--ink-2); padding: 8px 0; }
+.issue-cmt { border-top: 1px solid var(--line-2); padding: 8px 0; font-size: 13px; }
+.issue-cmt div { white-space: pre-wrap; color: var(--ink-2); margin-top: 2px; }
+.issue-cmt-link { display: inline-block; margin-top: 10px; text-decoration: none; }
+.issue-empty { color: var(--muted); font-size: 13px; padding: 8px 0; }
 
 /* 장판지 우클릭 연쇄 재배치 */
 .tt-grid td.reloc-src { box-shadow: inset 0 0 0 2px var(--brand); }
-.reloc-hint { position: sticky; top: 0; z-index: 5; margin: 0 0 6px; padding: 6px 12px; border-radius: 8px;
-  background: var(--brand-ghost); color: var(--brand); font-size: 12.5px; font-weight: 600; }
+/* 레이아웃을 밀지 않도록 화면 상단에 떠 있는 토스트로 표시 */
+.reloc-hint { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 90;
+  padding: 8px 16px; border-radius: 10px; background: var(--brand-ghost); color: var(--brand);
+  font-size: 12.5px; font-weight: 600; border: 1px solid var(--brand);
+  box-shadow: 0 8px 24px -8px rgba(0,0,0,.25); pointer-events: none; white-space: nowrap; }
 .reloc-plan { list-style: none; margin: 8px 0 0; padding: 0; font-size: 13px; white-space: normal; }
 .reloc-plan li { display: flex; align-items: center; gap: 8px; padding: 5px 2px; border-bottom: 1px dashed var(--line); }
 .reloc-plan li:last-child { border-bottom: none; }
