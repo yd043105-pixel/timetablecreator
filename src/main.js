@@ -921,6 +921,103 @@ function renderMasterBoard(st, cmap) {
   });
 })();
 
+// ───────── 우클릭: 연쇄 재배치 (CP-SAT 없이 즉시 계산) ─────────
+(() => {
+  const board = $('ttPreview');
+  const modal = $('relocModal');
+  let src = null;          // { uid, key } — 우클릭으로 집은 수업
+  let plan = null;         // relocPlanTo() 결과
+  let hintEl = null;
+
+  const exitPickMode = () => {
+    src = null;
+    board.querySelectorAll('.reloc-src').forEach(c => c.classList.remove('reloc-src'));
+    if (hintEl) { hintEl.remove(); hintEl = null; }
+  };
+  const closeModal = () => { modal.hidden = true; plan = null; };
+
+  // 수업 unit을 사람이 읽을 수 있게: 과목 (교사 · 학급)
+  const unitLabel = (uid) => {
+    const cells = app.lastState.sch.units[uid].cells;
+    const subj = cells[0][2];
+    const tchs = [...new Set(cells.map(c => c[1]))].join(',');
+    const cids = cells.map(c => c[0]).join(',');
+    return { subj, tchs, cids };
+  };
+
+  board.addEventListener('contextmenu', (e) => {
+    if ($('viewMode').value !== 'board' || !app.lastState) return;
+    const td = e.target.closest('td[data-uid]');
+    if (!td) return;
+    e.preventDefault();
+    exitPickMode();
+    src = { uid: +td.dataset.uid, key: td.dataset.key };
+    td.classList.add('reloc-src');
+    hintEl = document.createElement('div');
+    hintEl.className = 'reloc-hint';
+    const { subj, cids } = unitLabel(src.uid);
+    hintEl.textContent = `"${subj} (${cids})"을(를) 옮길 목표 칸을 같은 줄에서 클릭하세요 — ESC 취소`;
+    board.closest('.board-wrap').before(hintEl);
+  });
+
+  board.addEventListener('click', (e) => {
+    if (!src) return;
+    const td = e.target.closest('td[data-d]');
+    if (!td || td.dataset.key !== src.key) { exitPickMode(); return; }
+    const d = td.dataset.d, p = +td.dataset.p;
+    const st = app.lastState;
+    const cur = st.pos[src.uid];
+    if (cur && cur[0] === d && cur[1] === p) { exitPickMode(); return; }
+    const t0 = performance.now();
+    const found = st.relocPlanTo(src.uid, d, p);
+    const ms = (performance.now() - t0).toFixed(0);
+    const srcUid = src.uid;
+    exitPickMode();
+    const body = $('relocModalBody');
+    if (!found) {
+      plan = null;
+      body.innerHTML = `<b>${d} ${p}교시</b>로 옮기는 방법을 찾지 못했습니다.<br>` +
+        `연쇄 이동(최대 4단계)까지 시도했지만 하드 규칙(중복·비수업·불가시간)을 지키는 배치가 없습니다.`;
+      $('relocApply').hidden = true;
+    } else {
+      plan = found;
+      const items = found.moves.map((m, i) => {
+        const { subj, tchs, cids } = unitLabel(m.uid);
+        const tag = m.uid === srcUid ? '' : ' <span class="rp-who">(연쇄)</span>';
+        return `<li><span class="rp-slot">${m.from[0]}${m.from[1]}</span><span class="rp-arrow">→</span>` +
+          `<span class="rp-slot">${m.to[0]}${m.to[1]}</span> ${subj} <span class="rp-who">${tchs} · ${cids}</span>${tag}</li>`;
+      }).join('');
+      const dPen = found.penaltyAfter - st.penalty;
+      const penTxt = dPen === 0 ? '변화 없음' : (dPen > 0 ? `+${dPen} (나빠짐)` : `${dPen} (좋아짐)`);
+      body.innerHTML = `총 <b>${found.moves.length}개 수업</b>이 이동합니다 (계산 ${ms}ms · 하드 위반 없음).` +
+        `<ul class="reloc-plan">${items}</ul>` +
+        `<span class="m-score">소프트 페널티 ${st.penalty} → ${found.penaltyAfter} (${penTxt})</span>`;
+      $('relocApply').hidden = false;
+    }
+    modal.hidden = false;
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (!modal.hidden) closeModal();
+    else if (src) exitPickMode();
+  });
+
+  $('relocApply').onclick = () => {
+    if (!plan) { closeModal(); return; }
+    const st = app.lastState;
+    app.editHistory.push(st.snapshot());
+    if (app.editHistory.length > 100) app.editHistory.shift();
+    updateUndoBtn();
+    for (const m of plan.moves) st.move(m.uid, m.to[0], m.to[1]);
+    closeModal();
+    afterEdit();
+  };
+  $('relocCancel').onclick = closeModal;
+  $('relocModalClose').onclick = closeModal;
+  $('relocModalBackdrop').onclick = closeModal;
+})();
+
 // ───────── 엑셀 다운로드 ─────────
 $('btnDownload').onclick = async () => {
   if (!app.lastSol) return;

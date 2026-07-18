@@ -1029,4 +1029,108 @@ export class State {
     }
     return green;
   }
+
+  /**
+   * uid를 (d,p)로 옮기는 연쇄 재배치 계획 탐색 (CP-SAT 없이 즉시 계산).
+   * 목표 칸을 차지한 수업은 다른 칸으로 밀어내고, 밀려난 수업도 재귀적으로
+   * 재배치한다. 하드 규칙(중복·묶음·비수업·불가시간)이 현재보다 나빠지지
+   * 않는 계획만 반환. 실패 시 null.
+   * 반환: { moves: [{uid, from:[d,p], to:[d,p]}], penaltyAfter }
+   */
+  relocPlanTo(uid, targetD, targetP, opts = {}) {
+    const maxDepth = opts.maxDepth ?? 4;
+    let budget = opts.budget ?? 30000;
+    const sch = this.sch;
+    const on = (k) => sch.ruleOn(k);
+    const posA = this.pos[uid];
+    if (!posA || (posA[0] === targetD && posA[1] === targetP)) return null;
+
+    const staticOk = (u, d, p) => {
+      for (const [cid, tch] of sch.units[u].cells) {
+        const g = sch.classGrade.get(cid);
+        if (on('nonclass') && sch.nonclassSet.has(`${g}|${d}|${p}`)) return false;
+        if (on('unavail') && sch.unavailBlocked(tch, g, d, p)) return false;
+      }
+      return true;
+    };
+    const shares = (a, b) => {
+      const ua = sch.units[a], ub = sch.units[b];
+      if (on('bundleDay') && ua.bundle_key && ua.bundle_key === ub.bundle_key) return true;
+      for (const [cidA, tchA] of ua.cells)
+        for (const [cidB, tchB] of ub.cells)
+          if (cidA === cidB || tchA === tchB) return true;
+      return false;
+    };
+    const conflictsAt = (u, d, p) => {
+      const out = [];
+      for (let v = 0; v < sch.units.length; v++) {
+        if (v === u) continue;
+        const dp = this.pos[v];
+        if (dp && dp[0] === d && dp[1] === p && shares(u, v)) out.push(v);
+      }
+      return out;
+    };
+
+    const moves = [];               // 확정된 이동 스택 {uid, from, to}
+    const inChain = new Set();      // 이미 새 자리가 정해진 unit — 다시 밀어내지 않음
+    const rollbackTo = (n) => {
+      while (moves.length > n) {
+        const m = moves.pop();
+        inChain.delete(m.uid);
+        this.move(m.uid, m.from[0], m.from[1]);
+      }
+    };
+
+    const place = (u, d, p, depth) => {
+      if (budget-- <= 0 || !staticOk(u, d, p)) return false;
+      const conf = conflictsAt(u, d, p);
+      if (conf.some(v => inChain.has(v))) return false;
+      const from = this.pos[u];
+      this.move(u, d, p);
+      moves.push({ uid: u, from, to: [d, p] });
+      inChain.add(u);
+      if (!conf.length) return true;
+      if (depth < maxDepth && relocateAll(conf, 0, depth)) return true;
+      rollbackTo(moves.length - 1);
+      return false;
+    };
+
+    // 밀려난 수업들을 하나씩 새 자리에 배치 (전부 성공해야 true)
+    const relocateAll = (list, i, depth) => {
+      if (i >= list.length) return true;
+      const v = list[i];
+      for (const [d, p] of candidateSlots(v, depth)) {
+        const mark = moves.length;
+        if (place(v, d, p, depth + 1)) {
+          if (relocateAll(list, i + 1, depth)) return true;
+          rollbackTo(mark);
+        }
+        if (budget <= 0) return false;
+      }
+      return false;
+    };
+
+    // v의 후보 칸 — 빈 칸(충돌 0) 우선, 마지막 단계가 아니면 충돌 1개 칸도 시도
+    const candidateSlots = (v, depth) => {
+      const cur = this.pos[v];
+      const empty = [], occ = [];
+      for (const d of DAYS) for (const p of PERIODS) {
+        if (cur && cur[0] === d && cur[1] === p) continue;
+        if (!staticOk(v, d, p)) continue;
+        const conf = conflictsAt(v, d, p);
+        if (conf.some(w => inChain.has(w))) continue;
+        if (conf.length === 0) empty.push([d, p]);
+        else if (conf.length === 1 && depth + 1 < maxDepth) occ.push([d, p]);
+      }
+      return empty.concat(occ);
+    };
+
+    const snap = this.snapshot();
+    const baseHard = this.hardCount();
+    const found = place(uid, targetD, targetP, 0);
+    const ok = found && this.hardCount() <= baseHard;
+    const plan = ok ? { moves: moves.map(m => ({ ...m })), penaltyAfter: this.penalty } : null;
+    this.restore(snap);
+    return plan;
+  }
 }
