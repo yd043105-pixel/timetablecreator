@@ -1097,6 +1097,20 @@ function renderMasterBoard(st, cmap) {
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.hidden) close(); });
 })();
 
+// ───────── 방문자 수 (Netlify Functions — 개인 식별 없이 숫자만) ─────────
+(async () => {
+  try {
+    const today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10); // KST 기준
+    const firstToday = localStorage.getItem('visitDay') !== today;              // 하루 1회만 집계
+    const r = await fetch(`/api/visit${firstToday ? '?count=1' : ''}`);
+    if (!r.ok) return;
+    const { today: d, total } = await r.json();
+    if (firstToday) localStorage.setItem('visitDay', today);
+    $('visitCount').textContent = `오늘 ${d} · 누적 ${total}`;
+    $('visitLine').hidden = false;
+  } catch { /* 로컬 개발 등 함수가 없는 환경 — 표시 생략 */ }
+})();
+
 // ───────── 엑셀 다운로드 ─────────
 $('btnDownload').onclick = async () => {
   if (!app.lastSol) return;
