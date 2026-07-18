@@ -1,0 +1,12 @@
+# 보안 응답 헤더 — Netlify / Cloudflare Pages 등 _headers 지원 호스팅에서 자동 적용.
+# GitHub Pages는 커스텀 헤더를 지원하지 않아 이 파일이 무시된다 (그동안은
+# 빌드에 주입되는 CSP meta 태그 + coi-serviceworker가 부분적으로 대신한다).
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://api.github.com; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Strict-Transport-Security: max-age=31536000
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
