@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "시간표 생성기",
-    "url": "https://yd043105-pixel.github.io/timetablecreator/",
+    "url": "https://beautiful-selkie-219cd0.netlify.app/",
     "stack": "Vite"
   },
   "tracks": [
