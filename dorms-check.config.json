@@ -1,0 +1,15 @@
+{
+  "app": {
+    "name": "시간표 생성기",
+    "url": "https://yd043105-pixel.github.io/timetablecreator/",
+    "stack": "Vite"
+  },
+  "tracks": [
+    "security"
+  ],
+  "edzipCase": null,
+  "teacher": {
+    "dormsHandle": ""
+  },
+  "ownershipConfirmed": true
+}

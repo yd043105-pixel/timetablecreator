@@ -350,7 +350,7 @@ summary.subpanel-head { font-size: 13px; font-weight: 700; cursor: pointer; }
 .tt-grid.board-mode { min-width: 1460px; width: 100%; table-layout: fixed; }
 .tt-grid.board-mode th, .tt-grid.board-mode td { padding: 0 2px; font-size: 10.5px; height: 20px; line-height: 1.15; }
 .tt-grid.board-mode .row-head { position: sticky; left: 0; z-index: 2; background: #f7f9fb; font-weight: 700;
-  text-align: right; padding-right: 8px; width: 76px; color: var(--ink-2); box-shadow: 1px 0 0 var(--line); font-size: 11px;
+  text-align: center; padding: 0 3px; width: 48px; color: var(--ink-2); box-shadow: 1px 0 0 var(--line); font-size: 11px;
   overflow: hidden; white-space: nowrap; }
 .tt-grid.board-mode td { overflow: hidden; }
 .tt-grid.board-mode td .subj { font-size: 10.5px; font-weight: 600; white-space: nowrap; overflow: hidden; }

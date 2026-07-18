@@ -11,6 +11,13 @@ try { CpSat.setWorkerBridgeEnabled(true); } catch { /* node/미지원 환경 */ 
 
 const $ = (id) => document.getElementById(id);
 
+// 클릭재킹 방어 — GitHub Pages는 X-Frame-Options 헤더를 못 붙이므로 스크립트로 차단
+if (self !== top) { try { top.location.replace(self.location.href); } catch { document.documentElement.hidden = true; } }
+
+// 엑셀·사용자 입력에서 온 문자열을 innerHTML에 넣기 전 이스케이프 (XSS 방지)
+const escHtml = (s) => String(s ?? '').replace(/[&<>"']/g,
+  c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
 // ───────── 규칙 정의 (재넘버링: 하드1~7, 소프트1~5) ─────────
 const RULES = [
   { key: 'classConflict', cat: 'hard', num: 1, name: '학급 중복 금지', locked: true,
@@ -186,12 +193,12 @@ function afterDataLoaded(name) {
   const teacherTot = computeTeacherTotalHours(data);
   const maxT = Math.max(...teacherTot.values());
   $('fileInfo').innerHTML =
-    `✅ <b>${name || '시수표'}</b> — 학급 ${nCls}개 · 교사 ${data.teachers.length}명 · ` +
+    `✅ <b>${escHtml(name || '시수표')}</b> — 학급 ${nCls}개 · 교사 ${data.teachers.length}명 · ` +
     `묶음 ${data.bundle_groups.length}개 · 최다 학급 시수 ${Math.max(...classTot.values())} · 최다 교사 시수 ${maxT}`;
   // 교사/과목 선택 채우기
-  $('uaTeacher').innerHTML = data.teachers.map(t => `<option value="${t}">${t}</option>`).join('');
+  $('uaTeacher').innerHTML = data.teachers.map(t => `<option value="${escHtml(t)}">${escHtml(t)}</option>`).join('');
   $('subjPalette').innerHTML = data.subjects.map(s =>
-    `<label><input type="checkbox" value="${s}"> ${s}</label>`).join('');
+    `<label><input type="checkbox" value="${escHtml(s)}"> ${escHtml(s)}</label>`).join('');
   $('fileInfo').classList.remove('empty');
   // 파일의 최대 학년에 맞춰 학교급 자동 반영 (초등 6학년 등)
   const maxGrade = Math.max(3, ...(data.grades || [3]));
@@ -278,7 +285,7 @@ $('btnUaRegister').onclick = () => {
 function renderUa() {
   const el = $('uaList');
   el.innerHTML = app.unavail.map((u, i) =>
-    `<span class="chip">${u.teacher} ${u.day}${u.period}${u.grade ? ` (${u.grade}학년)` : ''} <span class="x" data-ua="${i}">✕</span></span>`
+    `<span class="chip">${escHtml(u.teacher)} ${u.day}${u.period}${u.grade ? ` (${u.grade}학년)` : ''} <span class="x" data-ua="${i}">✕</span></span>`
   ).join('') || '<span class="hint">등록된 불가시간 없음</span>';
 }
 
@@ -295,7 +302,7 @@ $('btnAddGroup').onclick = () => {
 };
 function renderGroups() {
   $('grpList').innerHTML = app.similar.map((g, i) =>
-    `<span class="chip">${g.name}: ${g.subjects.join(', ')} <span class="x" data-grp="${i}">✕</span></span>`
+    `<span class="chip">${escHtml(g.name)}: ${escHtml(g.subjects.join(', '))} <span class="x" data-grp="${i}">✕</span></span>`
   ).join('') || '<span class="hint">등록된 그룹 없음</span>';
 }
 
@@ -304,7 +311,7 @@ function renderAll() { renderNc(); renderUa(); renderGroups(); renderTplSpecials
 // ───────── 시수표 양식 생성 ─────────
 function renderTplSpecials() {
   $('tplSpecialList').innerHTML = app.tplSpecials.map((s, i) =>
-    `<span class="chip">${s} <span class="x" data-special="${i}">✕</span></span>`
+    `<span class="chip">${escHtml(s)} <span class="x" data-special="${i}">✕</span></span>`
   ).join('') || '<span class="hint">특별실 없음 (이름을 입력하고 추가하세요)</span>';
 }
 $('btnAddSpecial').onclick = () => {
@@ -683,7 +690,7 @@ function updateViewTargets() {
   } else {
     items = [...new Set(app.lastSol.assignments.map(a => a[1]))].sort();
   }
-  sel.innerHTML = items.map(i => `<option value="${i}">${i}</option>`).join('');
+  sel.innerHTML = items.map(i => `<option value="${escHtml(i)}">${escHtml(i)}</option>`).join('');
 }
 
 const bcode = (bk) => (bk ? bk.split('_').slice(1).join('_') : '');
@@ -742,7 +749,7 @@ function boardGreen(st, uid) {
 function cellInner(occ, cmap) {
   const o = occ[0];
   const bg = o.bk ? `background:#${cmap.get(o.bk) || 'FFF2CC'};` : '';
-  const badge = o.bk ? `<span class="bmark">${bcode(o.bk)}</span>` : '';
+  const badge = o.bk ? `<span class="bmark">${escHtml(bcode(o.bk))}</span>` : '';
   return { bg, badge };
 }
 
@@ -751,8 +758,7 @@ function violAttr(key) {
   if (!app.showViol || !app.cellIssues) return { cls: '', title: '' };
   const list = app.cellIssues.get(key);
   if (!list || !list.length) return { cls: '', title: '' };
-  const esc = list.join('\n').replace(/"/g, '&quot;');
-  return { cls: 'viol', title: ` title="${esc}"` };
+  return { cls: 'viol', title: ` title="${escHtml(list.join('\n'))}"` };
 }
 
 function renderPreview() {
@@ -780,16 +786,16 @@ function renderPreview() {
     for (const d of DAYS) {
       const kk = `${d}|${p}`;
       const list = occ.get(kk);
-      const da = `data-d="${d}" data-p="${p}" data-key="${target}" data-keytype="${keyType}"`;
+      const da = `data-d="${d}" data-p="${p}" data-key="${escHtml(target)}" data-keytype="${keyType}"`;
       const nc = mode === 'class' && ncSet.has(`${grade}|${d}|${p}`);
       if (list && list.length) {
         const { bg, badge } = cellInner(list, cmap);
         const conflict = list.length > 1 || nc || (mode === 'teacher' && uaSet.has(kk));
         const v = violAttr(`${mode === 'class' ? 'c' : 't'}|${target}|${d}|${p}`);
-        const sub = mode === 'class' ? list[0].tch : list[0].cids;
+        const sub = escHtml(mode === 'class' ? list[0].tch : list[0].cids);
         const extra = list.length > 1 ? ` <span class="who">+${list.length - 1}</span>` : '';
         html += `<td ${da} draggable="true" data-uid="${list[0].uid}" class="${conflict ? 'conflict' : ''} ${v.cls}"${v.title} style="${bg}">` +
-          `<div class="subj">${list[0].subj}${badge}</div><div class="who">${sub}${extra}</div></td>`;
+          `<div class="subj">${escHtml(list[0].subj)}${badge}</div><div class="who">${sub}${extra}</div></td>`;
       } else if (nc) {
         html += `<td ${da} class="nc">자율</td>`;
       } else if (mode === 'teacher' && uaSet.has(kk)) {
@@ -812,7 +818,7 @@ function renderMasterBoard(st, cmap) {
     if (!uaByTeacher.has(u.teacher)) uaByTeacher.set(u.teacher, new Set());
     uaByTeacher.get(u.teacher).add(`${u.day}|${u.period}`);
   }
-  let head1 = '<tr><th class="row-head">교사 \\ 요일</th>';
+  let head1 = '<tr><th class="row-head">교사</th>';
   for (const d of DAYS) head1 += `<th class="daygrp daysep" colspan="7">${d}</th>`;
   head1 += '</tr>';
   let head2 = '<tr><th class="row-head"></th>';
@@ -823,19 +829,19 @@ function renderMasterBoard(st, cmap) {
   for (const t of teachers) {
     const occ = occByTeacher.get(t);
     const ua = uaByTeacher.get(t) || new Set();
-    body += `<tr><th class="row-head">${t}</th>`;
+    body += `<tr><th class="row-head">${escHtml(t)}</th>`;
     for (const d of DAYS) {
       for (const p of PERIODS) {
         const kk = `${d}|${p}`;
         const sep = p === 1 ? 'daysep' : '';
-        const da = `data-d="${d}" data-p="${p}" data-key="${t}" data-keytype="teacher"`;
+        const da = `data-d="${d}" data-p="${p}" data-key="${escHtml(t)}" data-keytype="teacher"`;
         const list = occ.get(kk);
         if (list && list.length) {
           const { bg, badge } = cellInner(list, cmap);
           const conflict = list.length > 1;
           const v = violAttr(`t|${t}|${d}|${p}`);
           body += `<td ${da} draggable="true" data-uid="${list[0].uid}" class="${sep} ${conflict ? 'conflict' : ''} ${v.cls}"${v.title} style="${bg}">` +
-            `<div class="subj">${list[0].cids}${badge}</div></td>`;
+            `<div class="subj">${escHtml(list[0].cids)}${badge}</div></td>`;
         } else if (ua.has(kk)) {
           body += `<td ${da} class="ua ${sep}">×</td>`;
         } else {
@@ -985,7 +991,7 @@ function renderMasterBoard(st, cmap) {
         const { subj, tchs, cids } = unitLabel(m.uid);
         const tag = m.uid === srcUid ? '' : ' <span class="rp-who">(연쇄)</span>';
         return `<li><span class="rp-slot">${m.from[0]}${m.from[1]}</span><span class="rp-arrow">→</span>` +
-          `<span class="rp-slot">${m.to[0]}${m.to[1]}</span> ${subj} <span class="rp-who">${tchs} · ${cids}</span>${tag}</li>`;
+          `<span class="rp-slot">${m.to[0]}${m.to[1]}</span> ${escHtml(subj)} <span class="rp-who">${escHtml(tchs)} · ${escHtml(cids)}</span>${tag}</li>`;
       }).join('');
       const dPen = found.penaltyAfter - st.penalty;
       const penTxt = dPen === 0 ? '변화 없음' : (dPen > 0 ? `+${dPen} (나빠짐)` : `${dPen} (좋아짐)`);
