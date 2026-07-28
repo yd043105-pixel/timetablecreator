@@ -8,6 +8,19 @@ export const DAYS = ["월", "화", "수", "목", "금"];
 export const DAY_IDX = Object.fromEntries(DAYS.map((d, i) => [d, i]));
 export const PERIODS = [1, 2, 3, 4, 5, 6, 7];
 
+/**
+ * 교시 수를 바꾼다(7 ↔ 8교시 등). PERIODS/ALL_SLOTS를 새 배열로 교체하지 않고
+ * 제자리(splice/length)로 고쳐 쓴다 — ES 모듈은 같은 배열 객체를 공유하므로
+ * 이 함수를 import한 모든 파일에 자동 반영된다. 반드시 new Scheduler(...) 호출
+ * 전에 적용해야 한다.
+ */
+export function setPeriodCount(n) {
+  PERIODS.length = 0;
+  for (let p = 1; p <= n; p++) PERIODS.push(p);
+  ALL_SLOTS.length = 0;
+  for (const d of DAYS) for (const p of PERIODS) ALL_SLOTS.push([d, p]);
+}
+
 export const PEN = {
   CLASS_CONFLICT: 1000, TEACHER_CONFLICT: 1000, NONCLASS: 1000,
   SAME_DAY: 100, UNAVAIL: 1000, CONSEC: 50, BUNDLE_OVERLAP: 1000,
@@ -348,7 +361,7 @@ export class Scheduler {
       const ncls = new Set(cells.map(c => c[0])).size;
       const ntch = new Set(cells.map(c => c[1])).size;
       const cand = Math.max(1, this.unitCandidateSlots[u].length);
-      let score = (ncls + ntch) * (35.0 / cand);
+      let score = (ncls + ntch) * ((DAYS.length * PERIODS.length) / cand);
       if (this.units[u].bundle_key) score *= 1.5;
       rig.push(score);
     }
@@ -375,7 +388,7 @@ export class Scheduler {
 
   feasibilityReport() {
     const problems = [];
-    const TOTAL = 35;
+    const TOTAL = DAYS.length * PERIODS.length;
     const ncByGrade = new Map();
     for (const key of this.nonclassSet) {
       const g = parseInt(key.split("|")[0], 10);
@@ -418,9 +431,10 @@ export class Scheduler {
           const p = parseInt(k.split("|")[1], 10);
           if (p <= 4 && gs.has(0)) amBlock++;
         }
-        const amAvail = 20 - amBlock;
+        const amAvail = DAYS.length * 4 - amBlock;
         if (h > amAvail) {
-          problems.push(`[${tch} 교무부장] 2학기 5~7교시 금지인데 수업이 ${h}시간입니다. ` +
+          const lastP = PERIODS[PERIODS.length - 1];
+          problems.push(`[${tch} 교무부장] 2학기 5~${lastP}교시 금지인데 수업이 ${h}시간입니다. ` +
             `오전(1~4교시)에 넣을 수 있는 칸은 ${amAvail}칸뿐 → ${h - amAvail}칸 부족. ` +
             `교무부장 수업을 줄이거나 오전 전용을 해제해야 합니다.`);
         }
@@ -467,7 +481,7 @@ export class Scheduler {
         for (const p of ps) {
           if (psHas.has(p - 1) || psHas.has(p + 1)) {
             if (p - 1 >= 1 && !psHas.has(p - 1)) blockAdj.add(p - 1);
-            if (p + 1 <= 7 && !psHas.has(p + 1)) blockAdj.add(p + 1);
+            if (p + 1 <= PERIODS.length && !psHas.has(p + 1)) blockAdj.add(p + 1);
           }
         }
         for (const sp of singles) {

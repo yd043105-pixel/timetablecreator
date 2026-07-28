@@ -176,14 +176,14 @@ export async function buildExcel(sol, data, nonClass, unavail, year, semester) {
     const ws = wb.addWorksheet('교사_전체시간표');
     let row = 1;
     setCell(ws, row, 1, `${year}학년도 ${semester}학기 교사 전체 시간표`, { bold: true, fill: COLOR_HEADER_MAIN, size: 14 });
-    ws.mergeCells(row, 1, row, 40);
+    ws.mergeCells(row, 1, row, 1 + DAYS.length * PERIODS.length + 2);
     row += 2;
     setCell(ws, row, 1, '', { fill: COLOR_HEADER_SUB });
     let col = 2;
     for (const d of DAYS) {
       setCell(ws, row, col, d, { bold: true, fill: COLOR_HEADER_SUB });
-      ws.mergeCells(row, col, row, col + 6);
-      col += 7;
+      ws.mergeCells(row, col, row, col + PERIODS.length - 1);
+      col += PERIODS.length;
     }
     setCell(ws, row, col, '시수', { bold: true, fill: COLOR_HEADER_SUB });
     setCell(ws, row, col + 1, '교사', { bold: true, fill: COLOR_HEADER_SUB });

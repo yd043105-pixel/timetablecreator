@@ -3,9 +3,10 @@
  * H2/H3/H8 + H5/H11(하드), 나머지 소프트 최소화 + 반복 개선 루프.
  */
 import { CpModel, CpSolver, LinearExpr } from 'or-tools-wasm/cp-sat';
-import { DAYS, DAY_IDX, PEN, State } from './engine.js';
+import { DAYS, DAY_IDX, PERIODS, PEN, State } from './engine.js';
 
-const sid = (d, p) => DAY_IDX[d] * 7 + (p - 1);
+// PERIODS.length는 setPeriodCount()로 바뀔 수 있으므로 호출 시점마다 다시 읽는다(고정 상수 아님).
+const sid = (d, p) => DAY_IDX[d] * PERIODS.length + (p - 1);
 
 function sumOf(model, vars) {
   return LinearExpr.sum(vars);
@@ -33,8 +34,9 @@ async function feasibleHint(sch, workers, timeLimit = 30) {
       tu.get(tch).add(u);
     }
   }
+  const N = PERIODS.length;
   for (const us of [...cu.values(), ...tu.values()]) {
-    for (let s = 0; s < 35; s++) {
+    for (let s = 0; s < 5 * N; s++) {
       const vs = [];
       for (const u of us) {
         const b = hp.get(`${u}|${s}`);
@@ -46,8 +48,8 @@ async function feasibleHint(sch, workers, timeLimit = 30) {
   if (sch.ruleOn('bundleDay')) for (const sibs of sch.bundleSibling.values()) {
     for (let day = 0; day < 5; day++) {
       const vs = [];
-      for (const u of sibs) for (let p = 0; p < 7; p++) {
-        const b = hp.get(`${u}|${day * 7 + p}`);
+      for (const u of sibs) for (let p = 0; p < N; p++) {
+        const b = hp.get(`${u}|${day * N + p}`);
         if (b) vs.push(b);
       }
       if (vs.length > 1) m.addAtMostOne(vs);
@@ -67,8 +69,8 @@ async function feasibleHint(sch, workers, timeLimit = 30) {
     const cap = sch.subjDayCap.get(k) ?? 1;
     for (let day = 0; day < 5; day++) {
       const vs = [];
-      for (const u of us) for (let p = 0; p < 7; p++) {
-        const b = hp.get(`${u}|${day * 7 + p}`);
+      for (const u of us) for (let p = 0; p < N; p++) {
+        const b = hp.get(`${u}|${day * N + p}`);
         if (b) vs.push(b);
       }
       if (vs.length > cap) m.addLinearConstraint(LinearExpr.sum(vs), 0, cap);
@@ -84,10 +86,10 @@ async function feasibleHint(sch, workers, timeLimit = 30) {
     if (hrs !== 2) continue;
     for (let di = 0; di < 4; di++) {
       const vs = [];
-      for (const u of us) for (let p = 0; p < 7; p++) {
-        const b1 = hp.get(`${u}|${di * 7 + p}`);
+      for (const u of us) for (let p = 0; p < N; p++) {
+        const b1 = hp.get(`${u}|${di * N + p}`);
         if (b1) vs.push(b1);
-        const b2 = hp.get(`${u}|${(di + 1) * 7 + p}`);
+        const b2 = hp.get(`${u}|${(di + 1) * N + p}`);
         if (b2) vs.push(b2);
       }
       if (vs.length > 1) m.addLinearConstraint(LinearExpr.sum(vs), 0, 1);
@@ -162,8 +164,9 @@ export async function solveCpsat(sch, opts = {}) {
   }
 
   // ── 하드: H2 / H3 / H8 ──
+  const N = PERIODS.length;
   for (const us of [...classUnits.values(), ...teacherUnits.values()]) {
-    for (let s = 0; s < 35; s++) {
+    for (let s = 0; s < 5 * N; s++) {
       const vs = [];
       for (const u of us) {
         const b = place.get(`${u}|${s}`);
@@ -175,8 +178,8 @@ export async function solveCpsat(sch, opts = {}) {
   if (on('bundleDay')) for (const sibs of sch.bundleSibling.values()) {
     for (let day = 0; day < 5; day++) {
       const vs = [];
-      for (const u of sibs) for (let p = 0; p < 7; p++) {
-        const b = place.get(`${u}|${day * 7 + p}`);
+      for (const u of sibs) for (let p = 0; p < N; p++) {
+        const b = place.get(`${u}|${day * N + p}`);
         if (b) vs.push(b);
       }
       if (vs.length > 1) m.addAtMostOne(vs);
@@ -191,7 +194,7 @@ export async function solveCpsat(sch, opts = {}) {
       const cap = sch.subjDayCap.get(`${cid}|${subj}`) ?? 1;
       for (const d of DAYS) {
         const vs = [];
-        for (const u of us) for (let p = 1; p <= 7; p++) {
+        for (const u of us) for (let p = 1; p <= N; p++) {
           const b = pget(u, d, p);
           if (b) vs.push(b);
         }
@@ -205,7 +208,7 @@ export async function solveCpsat(sch, opts = {}) {
   const tb = new Map(); // `${t}|${d}|${p}` -> BoolVar | null
   for (const [t, us] of teacherUnits) {
     for (const d of DAYS) {
-      for (let p = 1; p <= 7; p++) {
+      for (let p = 1; p <= N; p++) {
         const vs = [];
         for (const u of us) {
           const b = pget(u, d, p);
@@ -226,7 +229,7 @@ export async function solveCpsat(sch, opts = {}) {
   // H7: (mc+1) 연속 초과 (소프트, 가중 강화)
   if (on('teacherConsec')) for (const t of teacherUnits.keys()) {
     for (const d of DAYS) {
-      for (let p = 1; p <= 7 - mc; p++) {
+      for (let p = 1; p <= N - mc; p++) {
         const win = [];
         for (let q = p; q <= p + mc; q++) {
           const b = tget(t, d, q);
@@ -256,14 +259,14 @@ export async function solveCpsat(sch, opts = {}) {
     const bus = bundleUnitsOf.get(t) || new Set();
     for (const d of DAYS) {
       const vs = [];
-      for (let p = 1; p <= 7; p++) {
+      for (let p = 1; p <= N; p++) {
         const b = tget(t, d, p);
         if (b) vs.push(b);
       }
       if (!vs.length) continue;
-      const ex = m.newIntVar(0, 7, `s8_${t}_${d}`);
+      const ex = m.newIntVar(0, N, `s8_${t}_${d}`);
       const bvars = [];
-      for (const u of bus) for (let p = 1; p <= 7; p++) {
+      for (const u of bus) for (let p = 1; p <= N; p++) {
         const b = pget(u, d, p);
         if (b) bvars.push(b);
       }
@@ -295,7 +298,7 @@ export async function solveCpsat(sch, opts = {}) {
     for (let di = 0; di < 4; di++) {
       const d1 = DAYS[di], d2 = DAYS[di + 1];
       const v1 = [], v2 = [];
-      for (const u of us) for (let p = 1; p <= 7; p++) {
+      for (const u of us) for (let p = 1; p <= N; p++) {
         const b1 = pget(u, d1, p);
         if (b1) v1.push(b1);
         const b2 = pget(u, d2, p);
@@ -312,12 +315,12 @@ export async function solveCpsat(sch, opts = {}) {
     for (const [grp, us] of groups) {
       for (const d of DAYS) {
         const vs = [];
-        for (const u of us) for (let p = 1; p <= 7; p++) {
+        for (const u of us) for (let p = 1; p <= N; p++) {
           const b = pget(u, d, p);
           if (b) vs.push(b);
         }
         if (vs.length > 1) {
-          const ex = m.newIntVar(0, 7, `s9_${cid}_${grp}_${d}`);
+          const ex = m.newIntVar(0, N, `s9_${cid}_${grp}_${d}`);
           m.addLinearConstraint(sumOf(m, vs).minus(ex), -100, 1);
           obj.push(LinearExpr.term(ex, PEN.SIMILAR_SAME_DAY));
         }
@@ -329,18 +332,18 @@ export async function solveCpsat(sch, opts = {}) {
   if (on('pairing')) for (const t of teacherUnits.keys()) {
     for (const d of DAYS) {
       const tbs = [];
-      for (let p = 1; p <= 7; p++) {
+      for (let p = 1; p <= N; p++) {
         const b = tget(t, d, p);
         if (b) tbs.push(b);
       }
       if (tbs.length < 3) continue;
-      const nday = m.newIntVar(0, 7, `n_${t}_${d}`);
+      const nday = m.newIntVar(0, N, `n_${t}_${d}`);
       m.addEquality(nday, sumOf(m, tbs));
       const ge3 = m.newBoolVar(`ge3_${t}_${d}`);
-      m.addLinearConstraint(nday, 3, 7).onlyEnforceIf(ge3);
+      m.addLinearConstraint(nday, 3, N).onlyEnforceIf(ge3);
       m.addLinearConstraint(nday, 0, 2).onlyEnforceIf(ge3.not());
       const pairs = [];
-      for (let p = 1; p <= 6; p++) {
+      for (let p = 1; p <= N - 1; p++) {
         const a = tget(t, d, p), b = tget(t, d, p + 1);
         if (!a || !b) continue;
         const y = m.newBoolVar(`pr_${t}_${d}_${p}`);
@@ -375,7 +378,7 @@ export async function solveCpsat(sch, opts = {}) {
   // 역할: 홍보담당
   const afternoonFlag = (t, d) => {
     const aps = [];
-    for (let p = 5; p <= 7; p++) {
+    for (let p = 5; p <= N; p++) {
       const b = tget(t, d, p);
       if (b) aps.push(b);
     }

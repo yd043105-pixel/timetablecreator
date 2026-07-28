@@ -389,8 +389,8 @@ summary.subpanel-head { font-size: 13px; font-weight: 700; cursor: pointer; }
 }
 .theme-btn:hover { color: #fff; }
 
-/* 학교급 세그먼트도 .seg 재사용 */
-#levelSeg .seg-btn { font-size: 12px; }
+/* 학교급 · 교시 수 세그먼트도 .seg 재사용 */
+#levelSeg .seg-btn, #periodSeg .seg-btn { font-size: 12px; }
 
 /* 규칙 목록 */
 .rules-block { margin-bottom: 20px; }

@@ -1,7 +1,7 @@
 /** 시간표 생성기 웹 UI */
 import * as XLSX from 'xlsx';
 import CpSat from 'or-tools-wasm/cp-sat';
-import { DAYS, PERIODS, parseData, Scheduler, computeClassTotalHours, computeTeacherTotalHours } from './engine.js';
+import { DAYS, PERIODS, parseData, Scheduler, setPeriodCount, computeClassTotalHours, computeTeacherTotalHours } from './engine.js';
 import { solveCpsatIterated } from './solver.js';
 import { buildExcel, bundleColorMap } from './xlsx_out.js';
 import { buildTemplate } from './template_gen.js';
@@ -10,6 +10,11 @@ import { buildTemplate } from './template_gen.js';
 try { CpSat.setWorkerBridgeEnabled(true); } catch { /* node/미지원 환경 */ }
 
 const $ = (id) => document.getElementById(id);
+
+// 장판지(board-mode) 최소 폭 계산 상수 — CSS의 기존 min-width:1460px(7교시 기준)와 맞춘 값.
+// row-head 열 48px + (요일×교시) 칸마다 이 폭을 곱해 8교시에도 칸 폭이 균일하게 유지되게 한다.
+const BOARD_ROW_HEAD_W = 48;
+const BOARD_COL_W = 1412 / 35;
 
 // 클릭재킹 방어 — GitHub Pages는 X-Frame-Options 헤더를 못 붙이므로 스크립트로 차단
 if (self !== top) { try { top.location.replace(self.location.href); } catch { document.documentElement.hidden = true; } }
@@ -56,6 +61,7 @@ const app = {
   similar: [],      // [{name, subjects: []}]
   ruleFlags: { ...DEFAULT_RULE_FLAGS },
   gradeCount: 3,    // 학교급: 중등 3 / 초등 6
+  periodCount: 7,   // 교시 수: 7 또는 8
   tplSpecials: [],  // 양식 생성용 특별실 이름 목록
   running: false,
   stopFlag: false,
@@ -123,6 +129,9 @@ function buildUaGrid() {
     html += `<td><input type="checkbox" data-all="${d}"></td></tr>`;
   }
   t.innerHTML = html;
+  // 교시 토글로 격자를 다시 그릴 때도 리스너는 한 번만 붙인다(중복 바인딩 방지)
+  if (t.dataset.bound) return;
+  t.dataset.bound = '1';
   let guard = false;
   t.addEventListener('change', (e) => {
     if (guard) return;
@@ -157,6 +166,35 @@ function uaGridGet() {
   });
   return out;
 }
+
+// ───────── 교시 수(7/8) 세그먼트 ─────────
+// 엔진 PERIODS·UI(비수업 select, 교사불가 격자, 점심 직전 교시 max)를 함께 갱신.
+// clampData: 8→7처럼 줄어들 때 잘려나가는 교시의 비수업·불가시간 데이터를 정리.
+function applyPeriodCount(n, { clampData = false } = {}) {
+  app.periodCount = n;
+  setPeriodCount(n);
+  document.querySelectorAll('#periodSeg .seg-btn').forEach(b =>
+    b.classList.toggle('active', parseInt(b.dataset.period, 10) === n));
+  if (clampData) {
+    app.nonclass = app.nonclass.filter(s => s.period <= n);
+    app.unavail = app.unavail.filter(u => u.period <= n);
+  }
+  $('ncPeriod').innerHTML = PERIODS.map(p => `<option value="${p}">${p}교시</option>`).join('');
+  buildUaGrid();
+  const lunchMax = Math.max(1, n - 1);
+  $('pLunchPeriod').max = String(lunchMax);
+  if (parseInt($('pLunchPeriod').value, 10) > lunchMax) $('pLunchPeriod').value = String(lunchMax);
+}
+document.querySelectorAll('#periodSeg .seg-btn').forEach(btn => {
+  btn.onclick = () => {
+    const n = parseInt(btn.dataset.period, 10);
+    if (n === app.periodCount) return;
+    applyPeriodCount(n, { clampData: true });
+    renderNc();
+    renderUa();
+    if (app.data) onUaTeacherChange();
+  };
+});
 
 // ───────── 파일 로드 ─────────
 $('btnOpenFile').onclick = () => $('fileInput').click();
@@ -408,6 +446,7 @@ function collectSettings() {
     year: parseInt($('year').value, 10),
     semester: parseInt($('semester').value, 10),
     gradeCount: app.gradeCount,
+    periodCount: app.periodCount,
     nonclass: app.nonclass,
     unavail: app.unavail,
     similar: app.similar,
@@ -431,8 +470,10 @@ function applySettings(s) {
     rebuildGradeSelects();
     renderTplGrades();
   }
-  app.nonclass = s.nonclass || [];
-  app.unavail = s.unavail || [];
+  // 예전 설정 파일(periodCount 없음)은 7교시로 간주
+  applyPeriodCount(s.periodCount || 7);
+  app.nonclass = (s.nonclass || []).filter(x => x.period <= app.periodCount);
+  app.unavail = (s.unavail || []).filter(u => u.period <= app.periodCount);
   app.similar = s.similar || [];
   app.tplSpecials = s.tplSpecials || [];
   app.ruleFlags = { ...DEFAULT_RULE_FLAGS, ...(s.ruleFlags || {}) };
@@ -495,6 +536,8 @@ $('sessionInput').onchange = async (e) => {
 // ───────── 실행 ─────────
 function buildScheduler() {
   const s = collectSettings();
+  // new Scheduler(...) 전에 반드시 PERIODS를 확정 (ALL_SLOTS·unitCandidateSlots가 여기 의존)
+  setPeriodCount(app.periodCount);
   // 규칙 플래그: 'lunch'는 엔진의 lunch_split으로 매핑, 나머지는 rules로 전달
   const { lunch, ...rules } = app.ruleFlags;
   const params = {
@@ -770,7 +813,13 @@ function renderPreview() {
   const board = $('ttPreview');
   board.classList.toggle('board-mode', mode === 'board');
 
-  if (mode === 'board') { renderMasterBoard(st, cmap); return; }
+  if (mode === 'board') {
+    // 교시 수(7/8)에 맞춰 장판지 폭 조정 — table-layout:fixed라 칸 폭이 균일하게 유지된다
+    board.style.minWidth = `${BOARD_ROW_HEAD_W + BOARD_COL_W * DAYS.length * PERIODS.length}px`;
+    renderMasterBoard(st, cmap);
+    return;
+  }
+  board.style.minWidth = '';
 
   const target = $('viewTarget').value;
   if (!target) { board.innerHTML = ''; return; }
@@ -819,7 +868,7 @@ function renderMasterBoard(st, cmap) {
     uaByTeacher.get(u.teacher).add(`${u.day}|${u.period}`);
   }
   let head1 = '<tr><th class="row-head">교사</th>';
-  for (const d of DAYS) head1 += `<th class="daygrp daysep" colspan="7">${d}</th>`;
+  for (const d of DAYS) head1 += `<th class="daygrp daysep" colspan="${PERIODS.length}">${d}</th>`;
   head1 += '</tr>';
   let head2 = '<tr><th class="row-head"></th>';
   for (const d of DAYS) for (const p of PERIODS) head2 += `<th class="${p === 1 ? 'daysep' : ''}">${p}</th>`;
